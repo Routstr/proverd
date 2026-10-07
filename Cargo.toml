@@ -1,0 +1,37 @@
+[package]
+name = "proverd"
+version = "0.1.0"
+edition = "2021"
+description = "TLSN Proxy-TLS prover sidecar for routstr-core"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Routstr/proverd"
+keywords = ["tlsn", "tlsnotary", "routstr", "proxy-tls", "prover"]
+categories = ["cryptography"]
+
+[dependencies]
+# Pinned to the tlsnotary/tlsn main commit this was developed and tested
+# against (the v0.1.0-alpha.16-pre line). tlsn is not published to crates.io,
+# so it must come from git.
+tlsn = { git = "https://github.com/tlsnotary/tlsn", rev = "4415391333bd67bd2b3f62082f0b6c3d0261aa05", features = ["mozilla-certs"] }
+
+anyhow = "1"
+async_io_stream = "0.3"
+axum = { version = "0.8", features = ["ws"] }
+bytes = "1"
+futures = "0.3"
+futures-rustls = "0.26"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = "0.26"
+tokio-util = { version = "0.7", features = ["compat"] }
+tower-service = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+base64 = "0.22"
+
+[[example]]
+name = "mock_upstream"
