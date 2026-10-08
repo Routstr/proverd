@@ -20,6 +20,7 @@ current state (verified inference is live on a production node).
 | [`docs/OVERVIEW.md`](docs/OVERVIEW.md) | **Start here.** Stack, status, how to run/deploy, limitations, reading order. |
 | [`docs/TLSN-routstr.md`](docs/TLSN-routstr.md) | **The design doc.** Trust model, proxy-TLS vs MPC-TLS, architecture, request flow, the API-key question, latency analysis, per-repo changes, security considerations. |
 | [`docs/STATUS.md`](docs/STATUS.md) | **The full history** (append-only journal): every milestone report, architect decision, measurement, fix, and open item. |
+| [`docs/LATENCY.md`](docs/LATENCY.md) | **Measurements + optimization paths**: the ~11 s verified-mode premium broken down phase by phase, why request #2 is not faster, the security analysis of connection reuse, and the security-neutral latency levers. |
 | [`docs/HANDOFF-M4M5.md`](docs/HANDOFF-M4M5.md) | What milestones M1–M5 built and where each piece lives. |
 | [`docs/TASK-CHANNEL-B-VPS.md`](docs/TASK-CHANNEL-B-VPS.md) | Task spec for the channel-B ws proxy + VPS deployment + live test. |
 | [`docs/BRIEF.md`](docs/BRIEF.md) | Original project brief and goals. |

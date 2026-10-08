@@ -792,3 +792,46 @@ worktree build on :8008 (PID 1956583) — user's traffic unaffected.
    && docker compose up -d --build`.
 
 — channel-B/VPS/live-test builder
+
+---
+
+## Latency analysis published (2026-10-08)
+
+Consolidated everything into `proverd/docs/LATENCY.md` (public repo, pushed —
+the docs trail lives there now; this journal stays the architect-facing
+working copy).
+
+What it records:
+- Full measured dataset: the verified-vs-unverified A/B (TTFT 11.97s vs
+  1.14s, +10.83s), all 7 real sessions' `SessionTimings` in chronological
+  order, non-streaming penalty (client 18.67s vs node 14.08s), proof scaling
+  (3.3–5.9s at 486 B → 66.3s at 230 KB).
+- **Answer to "is request #2 faster?" — no.** `tls_setup` = 7.5, 10.3, 8.7,
+  12.5, 9.0, 7.3 s across 40 min with no trend (30-second pair differed
+  1.8 s, inside ±3 s noise). Mechanism: fresh verifier process + fresh
+  channel-B ws + fresh TLS session + fresh MPC key agreement per request; a
+  proof is bound to one TLS session by construction.
+- Diagnosis: `tls_setup` is message-count × per-message latency across the
+  multi-hop channel-B relay (verifier → nginx → core ws proxy → proverd), not
+  compute. tlsn's docs state MPC-TLS is "highly interactive … every message on
+  the critical path" and warn `TCP_NODELAY` does **not** help for WebSocket
+  relays. We only set nodelay on the channel-C socket today.
+- Connection reuse, analysed honestly: core guarantees (host binding,
+  redaction, byte-equality) do **not** weaken; what changes is the unit of
+  trust (request → connection), so the verifier must then enforce window
+  containment, contiguity, ordering and per-request freshness — new
+  trust-critical code, not free. Hard blocker in the pinned tlsn rev
+  (4415391): the prover future completes only on server close, so the
+  commitment is terminal — one commitment per connection. Multi-disclosure per
+  transcript works (`Prover::prove(&mut self)` repeatable; verifier
+  `accept()` → `Committed`), but per-request proofs over a reused connection
+  would mean deferred/batched verdicts and a change to our shipped
+  `pending → verified` semantics.
+- Ordered plan: (1) instrument mux message counts + in-flight vs compute;
+  (2) NODELAY under every hop; (3) coalesce MPC messages in the ws bridge;
+  (4) fewer hops (direct verifier↔proverd, needs the pairing-DoS answer);
+  (5) only then evaluate connection reuse / an upstream protocol change.
+  TLS session resumption looks low-payoff (≈1 RTT) since the MPC rounds remain.
+
+New open item for architect: approve the §4 work order (1→3 are
+security-neutral and need no protocol ratification).

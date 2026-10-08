@@ -111,13 +111,15 @@ Measured on that node (glm-5.3-flash, `max_tokens: 16`, streaming):
 
 The verified-mode premium is dominated by the interactive MPC handshake across
 verifier↔prover↔upstream distance, not by compute — expect much less with the
-verifier closer to the upstream. Full numbers, session timings, and the
-optimization analysis: `docs/STATUS.md` (tail).
+verifier closer to the upstream. **Full breakdown, the security analysis of
+connection reuse, and the ranked list of security-neutral optimizations:
+[`docs/LATENCY.md`](LATENCY.md).**
 
 Open items (see `docs/STATUS.md` → "Open items for architect"): ratify protocol
 additions (advertisement fields, comparator tolerances, SSE status semantics),
 push/PR the SDK and routstrd branches, decision on connection reuse vs
-latency, and usage-record verdict persistence.
+latency ([`docs/LATENCY.md`](LATENCY.md) §3–4), and usage-record verdict
+persistence.
 
 ## Running it
 
@@ -229,8 +231,11 @@ the binary cannot be resolved rather than silently serving unverified.
 4. `docs/STATUS.md` — **the full history**: every milestone report, architect
    decisions, fixes, measurements, ops gotchas, and current open items. Long,
    append-only, newest at the bottom.
-5. `docs/HANDOFF-M4M5.md` — what M1–M5 built and where.
-6. `docs/TASK-CHANNEL-B-VPS.md` — the channel-B proxy + VPS deployment task
+5. `docs/LATENCY.md` — measurements and optimization paths: where the ~11 s
+   premium comes from, why reuse across requests does not happen today, what
+   connection reuse would cost in security terms, and what to try instead.
+6. `docs/HANDOFF-M4M5.md` — what M1–M5 built and where.
+7. `docs/TASK-CHANNEL-B-VPS.md` — the channel-B proxy + VPS deployment task
    spec (historical).
-7. The code, starting from this repo's `README.md` (proverd protocol surface)
+8. The code, starting from this repo's `README.md` (proverd protocol surface)
    and `src/testverifier.rs`.
