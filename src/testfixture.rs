@@ -48,6 +48,11 @@ pub fn ensure_crypto_provider() {
 pub fn app() -> Router {
     Router::new()
         .route("/v1/chat/completions", post(chat_completions))
+        // Same endpoint without the version prefix: exercises nodes whose
+        // upstream base_url lacks /v1 (the proxy strips it off channel A).
+        .route("/chat/completions", post(chat_completions))
+        // Different-endpoint stand-in for comparator negative tests.
+        .route("/v1/completions", post(chat_completions))
         .route("/protected", get(protected))
         .with_state(AppState)
 }

@@ -10,6 +10,11 @@ use proverd::{AppState, Config, router};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // rustls ends up with both `ring` (via tlsn) and `aws-lc-rs` (via
+    // tokio-tungstenite) crypto providers enabled through feature
+    // unification; rustls then refuses to auto-pick one. Pin aws-lc-rs.
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()

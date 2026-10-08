@@ -21,6 +21,11 @@ use proverd::testverifier::{DialTarget, redacted_string, run_verifier};
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> ExitCode {
+    // rustls ends up with both `ring` (via tlsn) and `aws-lc-rs` (via
+    // tokio-tungstenite) crypto providers enabled through feature
+    // unification; rustls then refuses to auto-pick one. Pin aws-lc-rs.
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -94,7 +99,29 @@ async fn main() -> ExitCode {
         let session = session.expect("--session required unless --proverd carries session_id");
         format!("{proverd}/ws?session_id={session}")
     };
-    match run_verifier(&ws_url, dial, extra_roots, Some(ready_tx)).await {
+    // Watchdog: callers are supposed to cancel() the verifier on error
+    // paths, but a crashed or buggy caller leaves this process parked in an
+    // async wait forever (observed in production: orphaned verifiers at
+    // multiple GB RSS each). A verified session takes seconds-to-minutes;
+    // bound the whole thing so the process is self-terminating.
+    let watchdog_secs: u64 = std::env::var("TLSN_VERIFIER_WATCHDOG_SECS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(600);
+    let session_future = tokio::time::timeout(
+        std::time::Duration::from_secs(watchdog_secs),
+        run_verifier(&ws_url, dial, extra_roots, Some(ready_tx)),
+    );
+    let run_outcome = match session_future.await {
+        Ok(outcome) => outcome,
+        Err(_) => {
+            eprintln!(
+                "VERIFICATION FAILED: watchdog timeout after {watchdog_secs}s (caller abandoned the session?)"
+            );
+            return ExitCode::FAILURE;
+        }
+    };
+    match run_outcome {
         Ok(result) => {
             if let Some(path) = transcript_out {
                 use base64::Engine;
