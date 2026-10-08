@@ -9,6 +9,34 @@ verifier and thereby proves that the inference response it received is
 byte-identical to what the claimed upstream API returned in a real TLS
 session — with the node's upstream API key kept hidden.
 
+## Project status & documentation
+
+**New to this work? Start with [`docs/OVERVIEW.md`](docs/OVERVIEW.md)** — it
+orients you in the whole stack, the repo/branch layout, how to run it, and the
+current state (verified inference is live on a production node).
+
+| document | what it is |
+|---|---|
+| [`docs/OVERVIEW.md`](docs/OVERVIEW.md) | **Start here.** Stack, status, how to run/deploy, limitations, reading order. |
+| [`docs/TLSN-routstr.md`](docs/TLSN-routstr.md) | **The design doc.** Trust model, proxy-TLS vs MPC-TLS, architecture, request flow, the API-key question, latency analysis, per-repo changes, security considerations. |
+| [`docs/STATUS.md`](docs/STATUS.md) | **The full history** (append-only journal): every milestone report, architect decision, measurement, fix, and open item. |
+| [`docs/HANDOFF-M4M5.md`](docs/HANDOFF-M4M5.md) | What milestones M1–M5 built and where each piece lives. |
+| [`docs/TASK-CHANNEL-B-VPS.md`](docs/TASK-CHANNEL-B-VPS.md) | Task spec for the channel-B ws proxy + VPS deployment + live test. |
+| [`docs/BRIEF.md`](docs/BRIEF.md) | Original project brief and goals. |
+
+This is not a standalone component: verified mode spans four repos. The
+branches that make up the current stack are:
+
+| repo | branch | what it contains |
+|---|---|---|
+| [`Routstr/proverd`](https://github.com/Routstr/proverd) (this repo) | `main` | prover sidecar, `tlsn-verifier`, mock upstream fixture, Dockerfile |
+| [`Routstr/routstr-core`](https://github.com/Routstr/routstr-core) | `feat/tlsn-verified-mode` | verified-mode forwarding, `/v1/tlsn/ws` channel-B proxy, `/v1/models` tlsn advertisement |
+| [`Routstr/routstr-sdk`](https://github.com/Routstr/routstr-sdk) | `feat/tlsn-verifier` | verifier rail (native + wasm), comparator, `routeRequests` passthrough |
+| [`Routstr/routstrd`](https://github.com/Routstr/routstrd) | `feat/tlsn-verify` | daemon wiring, `x-routstr-tlsn-status` verdicts, `scripts/e2e-tlsn.ts` harness |
+
+No pull requests have been opened yet; see `docs/STATUS.md` for the current
+per-branch push state and open ratification items.
+
 ## Components
 
 | Binary | Role |
@@ -19,7 +47,7 @@ session — with the node's upstream API key kept hidden.
 
 ## Protocol (proxy mode)
 
-Three channels (see the design doc in the Routstr docs):
+Three channels (full design: [`docs/TLSN-routstr.md`](docs/TLSN-routstr.md)):
 
 ```
 channel A — API call (HTTPS):      client ⇄ routstr-core
